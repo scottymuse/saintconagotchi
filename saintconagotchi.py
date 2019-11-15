@@ -1,13 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import pygame
-screen = pygame.display.set_mode((640,312))
 import pyinotify
 
-pygame.init()
-wm = pyinotify.WatchManager()
-
-mask = pyinotify.IN_CLOSE_WRITE
+screen = pygame.display.set_mode((640,312))
 
 class EventHandler(pyinotify.ProcessEvent):
     def process_IN_CLOSE_WRITE(self, event):
@@ -16,9 +12,13 @@ class EventHandler(pyinotify.ProcessEvent):
         screen.blit(img, (0,0))
         pygame.display.flip()
 
-handler = EventHandler()
-notifier = pyinotify.Notifier(wm, handler)
-wdd = wm.add_watch('/root/pwnagotchi.png', mask)
+def main():
+    pygame.init()
+    wm = pyinotify.WatchManager()
+    mask = pyinotify.IN_CLOSE_WRITE
+    handler = EventHandler()
+    notifier = pyinotify.Notifier(wm, handler)
+    wdd = wm.add_watch('/root/pwnagotchi.png', mask)
+    notifier.loop()
 
-notifier.loop()
-
+main()
