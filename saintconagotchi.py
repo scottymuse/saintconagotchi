@@ -25,7 +25,7 @@ def events(event):
             ps = None
             to_auto = False
             for p in psutil.process_iter():
-                if p.name == "pwnagotchi":
+                if p.name() == "pwnagotchi":
                     ps = p.pid
             if ps is not None:
                 proc = psutil.Process(ps)
