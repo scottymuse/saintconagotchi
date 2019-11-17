@@ -52,8 +52,9 @@ def main():
     notifier.start()
     wdd = wm.add_watch('/root/pwnagotchi.png', mask)
 
-    for event in pygame.event.get():
-        events(event)
+    while True:
+        for event in pygame.event.get():
+            events(event)
 
 
 main()
