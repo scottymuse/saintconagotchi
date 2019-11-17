@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import pygame
+from pygame.locals import *
 import pyinotify
 import psutil
 from subprocess import PIPE
@@ -15,7 +16,7 @@ class EventHandler(pyinotify.ProcessEvent):
         screen.blit(img, (0,0))
         pygame.display.flip()
 
-def events(self, event):
+def events(event):
     if event.type == pygame.KEYDOWN:
         if event.key == K_ESCAPE:
             # Toggle Manual/Auto Mode
@@ -38,9 +39,9 @@ def events(self, event):
                 open('/root/.pwnagotchi-auto')
             psutil.Popen(["/bin/systemctl", "restart", "pwnagotchi"])
 
-        if event.key == K_r:
+        #if event.key == K_r:
             # Toggle LED activity notifications
-        if event.key == K_l:
+        #if event.key == K_l:
             # Toggle mood LED
 
 def main():
