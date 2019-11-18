@@ -6,8 +6,11 @@ import pyinotify
 import psutil
 from subprocess import PIPE
 from time import time
+import board
+import neopixel
 
 screen = pygame.display.set_mode((640,480))
+strip = neopixel.Neopixel(pin=board.D18, n=2)
 
 class EventHandler(pyinotify.ProcessEvent):
     def process_IN_CLOSE_WRITE(self, event):
