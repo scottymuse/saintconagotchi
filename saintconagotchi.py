@@ -55,6 +55,7 @@ def events(event):
             # Toggle LED activity notifications
             if led_activity:
                 led_activity = False
+                strip[0] = (0, 0, 0)
             else:
                 led_activity = True
 
@@ -62,6 +63,7 @@ def events(event):
             # Toggle mood LED
             if led_mood:
                 led_mood = False
+                strip[1] = (0, 0, 0)
             else:
                 led_mood = True
 
@@ -73,22 +75,6 @@ mask = pyinotify.IN_CLOSE_WRITE
 notifier = pyinotify.ThreadedNotifier(wm, EventHandler())
 notifier.start()
 wdd = wm.add_watch('/root/pwnagotchi.png', mask)
-
-# Threads to read logfile and update LEDs
-#make the queue
-log_queue = Queue.Queue()
-def process_log_queue(q_obj):
-    while(True):
-        item = q_obj.get()
-        if item["type"] == "deauth" and led_activity and time() - item["time"] < .2:
-            strip[0] = (0, 255, 0)
-            sleep(.2)
-            strip[0] = (0, 0, 0)
-        if item["type"] == "association" and led_activity and time() - item["time"] < .2:
-            strip[0] = (255, 0, 0)
-            sleep(.2)
-            strip[0] = (0, 0, 0)
-
 
 # Pwnagotchi logfile generator
 def pwnagotchi_logfile_reader(logfile):
@@ -103,7 +89,7 @@ def pwnagotchi_logfile_reader(logfile):
 logfile = open("/var/log/pwnagotchi.log")
 loglines = pwnagotchi_logfile_reader(logfile)
 
-# Read logs
+# Thread to read logs and load queue
 def read_pwnagotchi_log():
     for line in loglines:
         if re.search(" deauthing ", line):
@@ -114,6 +100,23 @@ def read_pwnagotchi_log():
             log_queue.put({"type":"association", "time":time()})
         #need to understand ai mood better
 
+# Thread to process queue
+#make the queue
+log_queue = Queue.Queue()
+def process_log_queue(q_obj):
+    while(True):
+        item = q_obj.get()
+        if item["type"] == "deauth" and led_activity and time() - item["time"] < .2:
+            strip[0] = (0, 255, 0)
+            sleep(.2)
+            strip[0] = (0, 0, 0)
+        if item["type"] == "association" and led_activity and time() - item["time"] < .2:
+            strip[0] = (255, 0, 0)
+            sleep(.2)
+            strip[0] = (0, 0, 0)
+
+thread.start_new_thread(read_pwnagotchi_log)
+thread.start_new_thread(process_log_queue, log_queue)
 
 #Loop to check for button presses
 while(True):
