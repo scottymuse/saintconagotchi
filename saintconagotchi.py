@@ -6,7 +6,7 @@ import pyinotify
 import psutil
 from subprocess import PIPE
 from time import time,sleep
-import re
+from re import search
 import queue
 import threading
 import board
@@ -30,11 +30,13 @@ class EventHandler(pyinotify.ProcessEvent):
         update_image()
 
 def events(event):
+    global led_mood
+    global led_activity
     if event.type == pygame.KEYDOWN:
         if event.key == K_ESCAPE: # To auto mode
             open('/root/.pwnagotchi-auto', 'x')
             psutil.Popen(["/bin/systemctl", "restart", "pwnagotchi"])
-        if event.key == K_ENTER: # To manual mode
+        if event.key == K_RETURN: # To manual mode
             psutil.Popen(["/bin/systemctl", "restart", "pwnagotchi"])
 
         if event.key == K_r:
@@ -82,10 +84,10 @@ class read_pwnagotchi_log(threading.Thread):
 
     def run(self):
         for line in loglines:
-            if re.search(" deauthing ", line):
+            if search(" deauthing ", line):
                 # get AP name maybe for screen?
                 log_queue.put({"type":"deauth", "time":time()})
-            if re.search(" sending association frame ", line):
+            if search(" sending association frame ", line):
                 # get AP name maybe for screen?
                 log_queue.put({"type":"association", "time":time()})
             #need to understand ai mood better
