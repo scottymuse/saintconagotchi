@@ -48,7 +48,7 @@ def events(event):
                 if "--manual" in cmd:
                     to_auto = True
             if to_auto: # Currently in manual, create this file to make it auto
-                open('/root/.pwnagotchi-auto')
+                open('/root/.pwnagotchi-auto', 'x')
             psutil.Popen(["/bin/systemctl", "restart", "pwnagotchi"])
 
         if event.key == K_r:
@@ -114,7 +114,7 @@ class process_log_queue(threading.Thread):
 
     def run(self):
         while(True):
-            item = q_obj.get()
+            item = self.q_obj.get()
             if item["type"] == "deauth" and led_activity and time() - item["time"] < .2:
                 strip[0] = (0, 255, 0)
                 sleep(.2)
@@ -127,7 +127,7 @@ class process_log_queue(threading.Thread):
 read_logs_thread = read_pwnagotchi_log()
 read_logs_thread.start()
 process_queue_thread = process_log_queue(log_queue)
-prcoess_queue_thread.start()
+process_queue_thread.start()
 
 #Loop to check for button presses
 while(True):
