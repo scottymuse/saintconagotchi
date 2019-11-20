@@ -31,24 +31,10 @@ class EventHandler(pyinotify.ProcessEvent):
 
 def events(event):
     if event.type == pygame.KEYDOWN:
-        if event.key == K_ESCAPE:
-            # Toggle Manual/Auto Mode
-            # Check if currently in manual mode
-            ps = None
-            to_auto = False
-            for p in psutil.process_iter():
-                if p.name() == "pwnagotchi":
-                    ps = p.pid
-            if ps is not None:
-                proc = psutil.Process(ps)
-                if time() - proc.create_time() < 30:
-                    #Give it a moment!!!
-                    return
-                cmd = proc.cmdline()
-                if "--manual" in cmd:
-                    to_auto = True
-            if to_auto: # Currently in manual, create this file to make it auto
-                open('/root/.pwnagotchi-auto', 'x')
+        if event.key == K_ESCAPE: # To auto mode
+            open('/root/.pwnagotchi-auto', 'x')
+            psutil.Popen(["/bin/systemctl", "restart", "pwnagotchi"])
+        if event.key == K_ENTER: # To manual mode
             psutil.Popen(["/bin/systemctl", "restart", "pwnagotchi"])
 
         if event.key == K_r:
