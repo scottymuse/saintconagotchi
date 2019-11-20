@@ -5,27 +5,19 @@ from pygame.locals import *
 import pyinotify
 import psutil
 from subprocess import PIPE
-from time import time
-import Queue`
+from time import time,sleep
+import re
+import Queue
 import thread
 import board
 import neopixel
 
 screen = pygame.display.set_mode((640,480))
 strip = neopixel.Neopixel(pin=board.D18, n=2)
+led_mood = True
+led_activity = True
 
-# Pwnagotchi logfile generator
-def pwnagotchi_logfile_reader(logfile):
-    logfile.seek(0.2)
-    while True:
-        line = logfile.readline()
-        if not line:
-            time.sleep(0.1)
-            continue
-        yield line
-
-logfile = open("/var/log/pwnagotchi.log")
-loglines = pwnagotchi_logfile_reader(logfile)
+pygame.init()
 
 def update_iamge():
     img = pygame.image.load('/root/pwnagotchi.png')
@@ -59,12 +51,19 @@ def events(event):
                 open('/root/.pwnagotchi-auto')
             psutil.Popen(["/bin/systemctl", "restart", "pwnagotchi"])
 
-        #if event.key == K_r:
+        if event.key == K_r:
             # Toggle LED activity notifications
+            if led_activity:
+                led_activity = False
+            else:
+                led_activity = True
+
         #if event.key == K_l:
             # Toggle mood LED
-
-pygame.init()
+            if led_mood:
+                led_mood = False
+            else:
+                led_mood = True
 
 update_image() # Load the first image
 
@@ -76,10 +75,48 @@ notifier.start()
 wdd = wm.add_watch('/root/pwnagotchi.png', mask)
 
 # Threads to read logfile and update LEDs
-# goes here
+#make the queue
+log_queue = Queue.Queue()
+def process_log_queue(q_obj):
+    while(True):
+        item = q_obj.get()
+        if item["type"] == "deauth" and led_activity and time() - item["time"] < .2:
+            strip[0] = (0, 255, 0)
+            sleep(.2)
+            strip[0] = (0, 0, 0)
+        if item["type"] == "association" and led_activity and time() - item["time"] < .2:
+            strip[0] = (255, 0, 0)
+            sleep(.2)
+            strip[0] = (0, 0, 0)
+
+
+# Pwnagotchi logfile generator
+def pwnagotchi_logfile_reader(logfile):
+    logfile.seek(0.2)
+    while True:
+        line = logfile.readline()
+        if not line:
+            time.sleep(0.1)
+            continue
+        yield line
+
+logfile = open("/var/log/pwnagotchi.log")
+loglines = pwnagotchi_logfile_reader(logfile)
+
+# Read logs
+def read_pwnagotchi_log():
+    for line in loglines:
+        if re.search(" deauthing ", line):
+            # get AP name maybe for screen?
+            log_queue.put({"type":"deauth", "time":time()})
+        if re.search(" sending association frame ", line):
+            # get AP name maybe for screen?
+            log_queue.put({"type":"association", "time":time()})
+        #need to understand ai mood better
+
 
 #Loop to check for button presses
-while True:
+while(True):
     for event in pygame.event.get():
         events(event)
 
