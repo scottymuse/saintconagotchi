@@ -7,19 +7,19 @@ import psutil
 from subprocess import PIPE
 from time import time,sleep
 import re
-import Queue
-import thread
+import queue
+import threading
 import board
 import neopixel
 
 screen = pygame.display.set_mode((640,480))
-strip = neopixel.Neopixel(pin=board.D18, n=2)
+strip = neopixel.NeoPixel(pin=board.D18, n=2)
 led_mood = True
 led_activity = True
 
 pygame.init()
 
-def update_iamge():
+def update_image():
     img = pygame.image.load('/root/pwnagotchi.png')
     img = pygame.transform.scale(img, (640,312))
     screen.blit(img, (0,0))
@@ -82,7 +82,7 @@ def pwnagotchi_logfile_reader(logfile):
     while True:
         line = logfile.readline()
         if not line:
-            time.sleep(0.1)
+            sleep(0.1)
             continue
         yield line
 
@@ -90,33 +90,44 @@ logfile = open("/var/log/pwnagotchi.log")
 loglines = pwnagotchi_logfile_reader(logfile)
 
 # Thread to read logs and load queue
-def read_pwnagotchi_log():
-    for line in loglines:
-        if re.search(" deauthing ", line):
-            # get AP name maybe for screen?
-            log_queue.put({"type":"deauth", "time":time()})
-        if re.search(" sending association frame ", line):
-            # get AP name maybe for screen?
-            log_queue.put({"type":"association", "time":time()})
-        #need to understand ai mood better
+class read_pwnagotchi_log(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+
+    def run(self):
+        for line in loglines:
+            if re.search(" deauthing ", line):
+                # get AP name maybe for screen?
+                log_queue.put({"type":"deauth", "time":time()})
+            if re.search(" sending association frame ", line):
+                # get AP name maybe for screen?
+                log_queue.put({"type":"association", "time":time()})
+            #need to understand ai mood better
 
 # Thread to process queue
 #make the queue
-log_queue = Queue.Queue()
-def process_log_queue(q_obj):
-    while(True):
-        item = q_obj.get()
-        if item["type"] == "deauth" and led_activity and time() - item["time"] < .2:
-            strip[0] = (0, 255, 0)
-            sleep(.2)
-            strip[0] = (0, 0, 0)
-        if item["type"] == "association" and led_activity and time() - item["time"] < .2:
-            strip[0] = (255, 0, 0)
-            sleep(.2)
-            strip[0] = (0, 0, 0)
+log_queue = queue.Queue()
+class process_log_queue(threading.Thread):
+    def __init__(self, q_obj):
+        threading.Thread.__init__(self)
+        self.q_obj = q_obj
 
-thread.start_new_thread(read_pwnagotchi_log)
-thread.start_new_thread(process_log_queue, log_queue)
+    def run(self):
+        while(True):
+            item = q_obj.get()
+            if item["type"] == "deauth" and led_activity and time() - item["time"] < .2:
+                strip[0] = (0, 255, 0)
+                sleep(.2)
+                strip[0] = (0, 0, 0)
+            if item["type"] == "association" and led_activity and time() - item["time"] < .2:
+                strip[0] = (255, 0, 0)
+                sleep(.2)
+                strip[0] = (0, 0, 0)
+
+read_logs_thread = read_pwnagotchi_log()
+read_logs_thread.start()
+process_queue_thread = process_log_queue(log_queue)
+prcoess_queue_thread.start()
 
 #Loop to check for button presses
 while(True):
