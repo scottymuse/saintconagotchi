@@ -86,7 +86,7 @@ class saintconagotchi:
 
         self.update_image() # Load the first image
 
-    def start_image_watcher():
+    def start_image_watcher(self):
         # Thread to watch the image for changes and update
         wm = pyinotify.WatchManager()
         mask = pyinotify.IN_CLOSE_WRITE
@@ -100,11 +100,11 @@ class saintconagotchi:
         self.screen.blit(img, (0,0))
         pygame.display.flip()
 
-    def start_logfile_generator():
+    def start_logfile_generator(self):
         self.loglines = pwnagotchi_logfile_generator()
 
     # Pwnagotchi logfile generator
-    def pwnagotchi_logfile_generator():
+    def pwnagotchi_logfile_generator(self):
         self.logfile.seek(0,2)
         while True:
             line = self.logfile.readline()
@@ -113,13 +113,13 @@ class saintconagotchi:
                 continue
             yield line
 
-    def start_log_reader_thread():
+    def start_log_reader_thread(self):
         read_logs_thread.start()
 
-    def start_queue_processor_thread():
+    def start_queue_processor_thread(self):
         process_queue_thread.start()
 
-    def events(event):
+    def events(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == K_ESCAPE: # To auto mode
                 open('/root/.pwnagotchi-auto', 'x')
@@ -143,7 +143,7 @@ class saintconagotchi:
                     self.led_mood = True
 
     #Loop to check for button presses
-    def start_pygame_event_reader():
+    def start_pygame_event_reader(self):
         while(True):
             for event in pygame.event.get():
                 events(event)
