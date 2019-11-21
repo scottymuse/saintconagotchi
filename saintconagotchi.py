@@ -84,7 +84,7 @@ class saintconagotchi:
         pygame.init()
         pygame.mouse.set_visible(False)
 
-        update_image() # Load the first image
+        self.update_image() # Load the first image
 
     def start_image_watcher():
         # Thread to watch the image for changes and update
