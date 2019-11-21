@@ -67,10 +67,10 @@ class LEDS():
     def __init__(self):
         self.s = neopixel.NeoPixel(pin=board.D18, n=2)
 
-    def setColor(led, g, r, b):
+    def setColor(self, led, g, r, b):
         self.s[led] = (g, r, b)
 
-    def off(led):
+    def off(self, led):
         self.s[led] = (0, 0, 0)
 
 
