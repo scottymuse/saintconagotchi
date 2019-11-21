@@ -13,11 +13,11 @@ import board
 import neopixel
 
 screen = pygame.display.set_mode((640,480))
-strip = neopixel.NeoPixel(pin=board.D18, n=2)
 led_mood = True
 led_activity = True
 
 pygame.init()
+pygame.mouse.set_visible(False)
 
 def update_image():
     img = pygame.image.load('/root/pwnagotchi.png')
@@ -36,22 +36,20 @@ def events(event):
         if event.key == K_ESCAPE: # To auto mode
             open('/root/.pwnagotchi-auto', 'x')
             psutil.Popen(["/bin/systemctl", "restart", "pwnagotchi"])
-        if event.key == K_RETURN: # To manual mode
+        elif event.key == K_RETURN: # To manual mode
             psutil.Popen(["/bin/systemctl", "restart", "pwnagotchi"])
 
-        if event.key == K_r:
+        elif event.key == K_r:
             # Toggle LED activity notifications
             if led_activity:
                 led_activity = False
-                strip[0] = (0, 0, 0)
             else:
                 led_activity = True
 
-        #if event.key == K_l:
+        elif event.key == K_l:
             # Toggle mood LED
             if led_mood:
                 led_mood = False
-                strip[1] = (0, 0, 0)
             else:
                 led_mood = True
 
@@ -66,7 +64,7 @@ wdd = wm.add_watch('/root/pwnagotchi.png', mask)
 
 # Pwnagotchi logfile generator
 def pwnagotchi_logfile_reader(logfile):
-    logfile.seek(0.2)
+    logfile.seek(0,2)
     while True:
         line = logfile.readline()
         if not line:
@@ -74,7 +72,7 @@ def pwnagotchi_logfile_reader(logfile):
             continue
         yield line
 
-logfile = open("/var/log/pwnagotchi.log")
+logfile = open("/var/log/pwnagotchi.log", "r")
 loglines = pwnagotchi_logfile_reader(logfile)
 
 # Thread to read logs and load queue
@@ -86,10 +84,10 @@ class read_pwnagotchi_log(threading.Thread):
         for line in loglines:
             if search(" deauthing ", line):
                 # get AP name maybe for screen?
-                log_queue.put({"type":"deauth", "time":time()})
+                log_queue.put({"led": "activity", "type":"deauth", "time":time()})
             if search(" sending association frame ", line):
                 # get AP name maybe for screen?
-                log_queue.put({"type":"association", "time":time()})
+                log_queue.put({"led": "activity", "type":"association", "time":time()})
             #need to understand ai mood better
 
 # Thread to process queue
@@ -101,16 +99,22 @@ class process_log_queue(threading.Thread):
         self.q_obj = q_obj
 
     def run(self):
+        strip = neopixel.NeoPixel(pin=board.D18, n=2)
         while(True):
             item = self.q_obj.get()
-            if item["type"] == "deauth" and led_activity and time() - item["time"] < .2:
-                strip[0] = (0, 255, 0)
-                sleep(.2)
-                strip[0] = (0, 0, 0)
-            if item["type"] == "association" and led_activity and time() - item["time"] < .2:
-                strip[0] = (255, 0, 0)
-                sleep(.2)
-                strip[0] = (0, 0, 0)
+            if item["led"] == "activity":
+                if led_activity:
+                    if item["type"] == "deauth" and time() - item["time"] < .2:
+                        strip[0] = (0, 255, 0)
+                        sleep(.2)
+                        strip[0] = (0, 0, 0)
+                    elif item["type"] == "association" and time() - item["time"] < .2:
+                        strip[0] = (255, 0, 0)
+                        sleep(.2)
+                        strip[0] = (0, 0, 0)
+                else:
+                    strip[0] = (0, 0, 0)
+
 
 read_logs_thread = read_pwnagotchi_log()
 read_logs_thread.start()
