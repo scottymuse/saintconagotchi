@@ -62,6 +62,18 @@ notifier = pyinotify.ThreadedNotifier(wm, EventHandler())
 notifier.start()
 wdd = wm.add_watch('/root/pwnagotchi.png', mask)
 
+#LED Class
+class LEDS():
+    def __init__(self):
+        self.s = neopixel.NeoPixel(pin=board.D18, n=2)
+
+    def setColor(led, g, r, b):
+        self.s[led] = (g, r, b)
+
+    def off(led):
+        self.s[led] = (0, 0, 0)
+
+
 # Pwnagotchi logfile generator
 def pwnagotchi_logfile_reader(logfile):
     logfile.seek(0,2)
@@ -97,24 +109,23 @@ class process_log_queue(threading.Thread):
     def __init__(self, q_obj):
         threading.Thread.__init__(self)
         self.q_obj = q_obj
+        self.leds = LEDS()
 
     def run(self):
-        strip = neopixel.NeoPixel(pin=board.D18, n=2)
         while(True):
             item = self.q_obj.get()
             if item["led"] == "activity":
                 if led_activity:
                     if item["type"] == "deauth" and time() - item["time"] < .2:
-                        strip[0] = (0, 255, 0)
+                        self.leds.setColor(0, 0, 255, 0)
                         sleep(.2)
-                        strip[0] = (0, 0, 0)
+                        self.leds.off(0)
                     elif item["type"] == "association" and time() - item["time"] < .2:
-                        strip[0] = (255, 0, 0)
+                        self.leds.setColor(0, 255, 0, 0)
                         sleep(.2)
-                        strip[0] = (0, 0, 0)
+                        self.leds.off(0)
                 else:
-                    strip[0] = (0, 0, 0)
-
+                    self.leds.off(0)
 
 read_logs_thread = read_pwnagotchi_log()
 read_logs_thread.start()
