@@ -145,7 +145,7 @@ class saintconagotchi:
     def start_pygame_event_reader(self):
         while(True):
             for event in pygame.event.get():
-                events(event)
+                self.events(event)
 
 if __name__ == "__main__":
     s = saintconagotchi()
