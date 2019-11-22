@@ -25,6 +25,9 @@ class LEDS():
     def __init__(self):
         self.s = neopixel.NeoPixel(pin=board.D18, n=2)
 
+    def __del__(self):
+        s.deinit()
+
     def setColor(self, led, g, r, b):
         self.s[led] = (g, r, b)
 
@@ -148,8 +151,13 @@ class saintconagotchi:
                 self.events(event)
 
 if __name__ == "__main__":
-    s = saintconagotchi()
-    s.start_image_watcher()
-    s.start_log_reader_thread()
-    s.start_queue_processor_thread()
-    s.start_pygame_event_reader()
+    try:
+        s = saintconagotchi()
+        s.start_image_watcher()
+        s.start_log_reader_thread()
+        s.start_queue_processor_thread()
+        s.start_pygame_event_reader()
+    except Exception as e:
+        print(e)
+    finally:
+        pygame.quit
