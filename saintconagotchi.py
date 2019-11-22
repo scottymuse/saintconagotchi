@@ -9,7 +9,7 @@ from time import time,sleep
 from re import search
 import queue
 import threading
-import LEDS
+from LEDS import LEDS
 
 class EventHandler(pyinotify.ProcessEvent):
     def __init__(self, callback):
