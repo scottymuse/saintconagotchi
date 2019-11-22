@@ -34,12 +34,13 @@ class LEDS():
 
 # Thread to read logs and load queue
 class read_pwnagotchi_log(threading.Thread):
-    def __init__(self, q_obj):
+    def __init__(self, log_generator, q_obj):
         threading.Thread.__init__(self)
         self.q_obj = q_obj
+        self.log_generator = log_generator
 
     def run(self):
-        for line in loglines:
+        for line in self.log_generator:
             if search(" deauthing ", line):
                 # get AP name maybe for screen?
                 q_obj.put({"led": "activity", "type":"deauth", "time":time()})
@@ -78,8 +79,9 @@ class saintconagotchi:
         self.led_activity = True
         self.logfile = open("/var/log/pwnagotchi.log", "r")
         self.log_queue = queue.Queue()
-        self.read_logs_thread = read_pwnagotchi_log(self.log_queue)
-        self.process_queue_thread = process_log_queue(self.log_queue)
+        self.loglines = self.pwnagotchi_logfile_generator()
+        self.read_logs_thread = read_pwnagotchi_log(log_generator=self.loglines, q_obj=self.log_queue)
+        self.process_queue_thread = process_log_queue(q_obj=self.log_queue)
 
         pygame.init()
         pygame.mouse.set_visible(False)
@@ -99,9 +101,6 @@ class saintconagotchi:
         img = pygame.transform.scale(img, (640,312))
         self.screen.blit(img, (0,0))
         pygame.display.flip()
-
-    def start_logfile_generator(self):
-        self.loglines = self.pwnagotchi_logfile_generator()
 
     # Pwnagotchi logfile generator
     def pwnagotchi_logfile_generator(self):
@@ -151,7 +150,6 @@ class saintconagotchi:
 if __name__ == "__main__":
     s = saintconagotchi()
     s.start_image_watcher()
-    s.start_logfile_generator()
     s.start_log_reader_thread()
     s.start_queue_processor_thread()
     s.start_pygame_event_reader()
