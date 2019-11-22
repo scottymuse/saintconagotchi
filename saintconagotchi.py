@@ -43,10 +43,10 @@ class read_pwnagotchi_log(threading.Thread):
         for line in self.log_generator:
             if search(" deauthing ", line):
                 # get AP name maybe for screen?
-                q_obj.put({"led": "activity", "type":"deauth", "time":time()})
+                self.q_obj.put({"led": "activity", "type":"deauth", "time":time()})
             if search(" sending association frame ", line):
                 # get AP name maybe for screen?
-                q_obj.put({"led": "activity", "type":"association", "time":time()})
+                self.q_obj.put({"led": "activity", "type":"association", "time":time()})
             #need to understand ai mood better
 
 # Thread to process queue
