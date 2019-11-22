@@ -63,7 +63,7 @@ class process_log_queue(threading.Thread):
         while(True):
             item = self.q_obj.get()
             if item["led"] == "activity":
-                if led_activity:
+                if self.led_activity:
                     if item["type"] == "deauth" and time() - item["time"] < .2:
                         self.leds.setColor(0, 0, 255, 0)
                         sleep(.2)
