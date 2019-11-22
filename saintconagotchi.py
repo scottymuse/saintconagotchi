@@ -101,7 +101,7 @@ class saintconagotchi:
         pygame.display.flip()
 
     def start_logfile_generator(self):
-        self.loglines = pwnagotchi_logfile_generator()
+        self.loglines = self.pwnagotchi_logfile_generator()
 
     # Pwnagotchi logfile generator
     def pwnagotchi_logfile_generator(self):
@@ -114,10 +114,10 @@ class saintconagotchi:
             yield line
 
     def start_log_reader_thread(self):
-        read_logs_thread.start()
+        self.read_logs_thread.start()
 
     def start_queue_processor_thread(self):
-        process_queue_thread.start()
+        self.process_queue_thread.start()
 
     def events(self, event):
         if event.type == pygame.KEYDOWN:
