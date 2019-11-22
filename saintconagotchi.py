@@ -54,8 +54,10 @@ class read_pwnagotchi_log(threading.Thread):
 
 # Thread to process queue
 class process_log_queue(threading.Thread):
-    def __init__(self, q_obj):
+    def __init__(self, led_activity, led_mood, q_obj):
         threading.Thread.__init__(self)
+        self.led_activity = led_activity
+        self.led_mood = led_mood
         self.q_obj = q_obj
         self.leds = LEDS()
 
@@ -84,7 +86,7 @@ class saintconagotchi:
         self.log_queue = queue.Queue()
         self.loglines = self.pwnagotchi_logfile_generator()
         self.read_logs_thread = read_pwnagotchi_log(log_generator=self.loglines, q_obj=self.log_queue)
-        self.process_queue_thread = process_log_queue(q_obj=self.log_queue)
+        self.process_queue_thread = process_log_queue(led_activity=led_activity, led_mood=led_mood, q_obj=self.log_queue)
 
         pygame.init()
         pygame.mouse.set_visible(False)
