@@ -86,7 +86,7 @@ class saintconagotchi:
         self.log_queue = queue.Queue()
         self.loglines = self.pwnagotchi_logfile_generator()
         self.read_logs_thread = read_pwnagotchi_log(log_generator=self.loglines, q_obj=self.log_queue)
-        self.process_queue_thread = process_log_queue(led_activity=led_activity, led_mood=led_mood, q_obj=self.log_queue)
+        self.process_queue_thread = process_log_queue(self.led_activity=led_activity, self.led_mood=led_mood, q_obj=self.log_queue)
 
         pygame.init()
         pygame.mouse.set_visible(False)
