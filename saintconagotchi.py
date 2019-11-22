@@ -26,7 +26,7 @@ class LEDS():
         self.s = neopixel.NeoPixel(pin=board.D18, n=2)
 
     def __del__(self):
-        s.deinit()
+        self.s.deinit()
 
     def setColor(self, led, g, r, b):
         self.s[led] = (g, r, b)
@@ -90,6 +90,9 @@ class saintconagotchi:
         pygame.mouse.set_visible(False)
 
         self.update_image() # Load the first image
+
+    def __del__(self):
+        pygame.quit()
 
     def start_image_watcher(self):
         # Thread to watch the image for changes and update
