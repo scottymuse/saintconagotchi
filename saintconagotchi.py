@@ -9,8 +9,7 @@ from time import time,sleep
 from re import search
 import queue
 import threading
-import board
-import neopixel
+import LEDS
 
 class EventHandler(pyinotify.ProcessEvent):
     def __init__(self, callback):
@@ -19,21 +18,6 @@ class EventHandler(pyinotify.ProcessEvent):
 
     def process_IN_CLOSE_WRITE(self, event):
         self.callback()
-
-#LED Class
-class LEDS():
-    def __init__(self):
-        self.s = neopixel.NeoPixel(pin=board.D18, n=2)
-
-    def __del__(self):
-        self.s.deinit()
-
-    def setColor(self, led, g, r, b):
-        self.s[led] = (g, r, b)
-
-    def off(self, led):
-        self.s[led] = (0, 0, 0)
-
 
 # Thread to read logs and load queue
 class read_pwnagotchi_log(threading.Thread):
@@ -165,4 +149,4 @@ if __name__ == "__main__":
     except Exception as e:
         print(e)
     finally:
-        pygame.quit
+        pygame.quit()
