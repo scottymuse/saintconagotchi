@@ -92,7 +92,7 @@ class saintconagotchi:
     def __del__(self):
         pygame.quit()
 
-    def draw_status_squares():
+    def draw_status_squares(self):
         if self.led_activity:
             pygame.draw.rect(self.screen, (255, 0, 0), (0, 313, 213, 167))
         else:
@@ -105,6 +105,7 @@ class saintconagotchi:
             pygame.draw.rect(self.screen, (255, 0, 0), (427, 313, 213, 167))
         else:
             pygame.draw.rect(self.screen, (0, 255, 0), (427, 313, 213, 167))
+        pygame.display.flip()
 
     def start_image_watcher(self):
         # Thread to watch the image for changes and update
@@ -152,6 +153,7 @@ class saintconagotchi:
                 else:
                     self.led_activity = True
                 self.log_queue.put({"type": "led_toggle", "led": "activity", "value": self.led_activity})
+                self.draw_status_squares()
 
             elif event.key == K_l:
                 # Toggle mood LED
@@ -160,6 +162,7 @@ class saintconagotchi:
                 else:
                     self.led_mood = True
                 self.log_queue.put({"type": "led_toggle", "led": "mood", "value": self.led_mood})
+                self.draw_status_squares()
 
     #Loop to check for button presses
     def start_pygame_event_reader(self):
