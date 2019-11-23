@@ -30,10 +30,12 @@ class read_pwnagotchi_log(threading.Thread):
         for line in self.log_generator:
             if search(" deauthing ", line):
                 # get AP name maybe for screen?
-                self.q_obj.put({"led": "activity", "type":"deauth", "time":time()})
+                #self.q_obj.put({"led": "activity", "type":"deauth", "time":time()})
+                self.q_obj.put({"type": "activity", "time": time(), "act_type": "deauth"})
             if search(" sending association frame ", line):
                 # get AP name maybe for screen?
-                self.q_obj.put({"led": "activity", "type":"association", "time":time()})
+                #self.q_obj.put({"led": "activity", "type":"association", "time":time()})
+                self.q_obj.put({"type": "activity", "time": time(), "act_type": "association"})
             #need to understand ai mood better
 
 # Thread to process queue
@@ -48,18 +50,23 @@ class process_log_queue(threading.Thread):
     def run(self):
         while(True):
             item = self.q_obj.get()
-            if item["led"] == "activity":
+            if item["type"] == "activity":
                 if self.led_activity:
-                    if item["type"] == "deauth" and time() - item["time"] < .2:
+                    if item["act_type"] == "deauth" and time() - item["time"] < .2:
                         self.leds.setColor(0, 0, 255, 0)
                         sleep(.2)
                         self.leds.off(0)
-                    elif item["type"] == "association" and time() - item["time"] < .2:
+                    elif item["act_type"] == "association" and time() - item["time"] < .2:
                         self.leds.setColor(0, 255, 0, 0)
                         sleep(.2)
                         self.leds.off(0)
                 else:
                     self.leds.off(0)
+            elif item["type"] == "led_toggle":
+                if item["led"] == "activity":
+                    self.led_activity = item["value"]
+                else:
+                    self.led_mood = item["value"]
 
 class saintconagotchi:
     def __init__(self):
@@ -125,6 +132,7 @@ class saintconagotchi:
                     self.led_activity = False
                 else:
                     self.led_activity = True
+                log_queue.put({"type": "led_toggle", "led": "activity", "value": self.led_activity})
 
             elif event.key == K_l:
                 # Toggle mood LED
@@ -132,6 +140,7 @@ class saintconagotchi:
                     self.led_mood = False
                 else:
                     self.led_mood = True
+                log_queue.put({"type": "led_toggle", "led": "mood", "value": self.led_mood})
 
     #Loop to check for button presses
     def start_pygame_event_reader(self):
