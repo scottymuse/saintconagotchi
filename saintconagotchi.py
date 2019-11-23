@@ -29,12 +29,8 @@ class read_pwnagotchi_log(threading.Thread):
     def run(self):
         for line in self.log_generator:
             if search(" deauthing ", line):
-                # get AP name maybe for screen?
-                #self.q_obj.put({"led": "activity", "type":"deauth", "time":time()})
                 self.q_obj.put({"type": "activity", "time": time(), "act_type": "deauth"})
             if search(" sending association frame ", line):
-                # get AP name maybe for screen?
-                #self.q_obj.put({"led": "activity", "type":"association", "time":time()})
                 self.q_obj.put({"type": "activity", "time": time(), "act_type": "association"})
             #need to understand ai mood better
 
@@ -73,6 +69,15 @@ class saintconagotchi:
         self.screen = pygame.display.set_mode((640,480))
         self.led_mood = True
         self.led_activity = True
+        self.manual_mode = False
+        for proc in psutil.process_iter():
+            if proc.name() == "pwnagotchi":
+                if "--manual" in proc.cmdline():
+                    self.manual_mode = True
+                    break
+                else:
+                    break
+        self.draw_status_squares()
         self.logfile = open("/var/log/pwnagotchi.log", "r")
         self.log_queue = queue.Queue()
         self.loglines = self.pwnagotchi_logfile_generator()
@@ -86,6 +91,20 @@ class saintconagotchi:
 
     def __del__(self):
         pygame.quit()
+
+    def draw_status_squares():
+        if self.led_activity:
+            pygame.draw.rect(self.screen, (255, 0, 0), (0, 313, 213, 167))
+        else:
+            pygame.draw.rect(self.screen, (0, 255, 0), (0, 313, 213, 167))
+        if self.manual_mode:
+            pygame.draw.rect(self.screen, (255, 0, 0), (213, 313, 214, 167))
+        else:
+            pygame.draw.rect(self.screen, (0, 255, 0), (213, 313, 214, 167))
+        if self.led_mood:
+            pygame.draw.rect(self.screen, (255, 0, 0), (427, 313, 213, 167))
+        else:
+            pygame.draw.rect(self.screen, (0, 255, 0), (427, 313, 213, 167))
 
     def start_image_watcher(self):
         # Thread to watch the image for changes and update
@@ -132,7 +151,7 @@ class saintconagotchi:
                     self.led_activity = False
                 else:
                     self.led_activity = True
-                log_queue.put({"type": "led_toggle", "led": "activity", "value": self.led_activity})
+                self.log_queue.put({"type": "led_toggle", "led": "activity", "value": self.led_activity})
 
             elif event.key == K_l:
                 # Toggle mood LED
@@ -140,7 +159,7 @@ class saintconagotchi:
                     self.led_mood = False
                 else:
                     self.led_mood = True
-                log_queue.put({"type": "led_toggle", "led": "mood", "value": self.led_mood})
+                self.log_queue.put({"type": "led_toggle", "led": "mood", "value": self.led_mood})
 
     #Loop to check for button presses
     def start_pygame_event_reader(self):
