@@ -28,10 +28,12 @@ class read_pwnagotchi_log(threading.Thread):
 
     def run(self):
         for line in self.log_generator:
-            if search(" deauthing ", line):
-                self.q_obj.put({"type": "activity", "time": time(), "act_type": "deauth"})
             if search(" sending association frame ", line):
                 self.q_obj.put({"type": "activity", "time": time(), "act_type": "association"})
+            elif search(" deauthing ", line):
+                self.q_obj.put({"type": "activity", "time": time(), "act_type": "deauth"})
+            elif search(" captured new handshake ", line):
+                self.q_obj.put({"type": "activity", "time": time(), "act_type": "handshake"})
             #need to understand ai mood better
 
 # Thread to process queue
@@ -48,14 +50,14 @@ class process_log_queue(threading.Thread):
             item = self.q_obj.get()
             if item["type"] == "activity":
                 if self.led_activity:
-                    if item["act_type"] == "deauth" and time() - item["time"] < .2:
-                        self.leds.setColor(0, 0, 255, 0)
-                        sleep(.2)
-                        self.leds.off(0)
-                    elif item["act_type"] == "association" and time() - item["time"] < .2:
+                    if item["act_type"] == "association" and time() - item["time"] < .2:
                         self.leds.setColor(0, 255, 0, 0)
-                        sleep(.2)
-                        self.leds.off(0)
+                    elif item["act_type"] == "deauth" and time() - item["time"] < .2:
+                        self.leds.setColor(0, 0, 255, 0)
+                    elif item["act_type"] == "handshake" and time() - item["time"] < .2:
+                        self.leds.setColor(0, 0, 255, 255)
+                    sleep(.2)
+                    self.leds.off(0)
                 else:
                     self.leds.off(0)
             elif item["type"] == "led_toggle":
@@ -94,17 +96,17 @@ class saintconagotchi:
 
     def draw_status_squares(self):
         if self.led_activity:
-            pygame.draw.rect(self.screen, (255, 0, 0), (0, 313, 213, 167))
-        else:
             pygame.draw.rect(self.screen, (0, 255, 0), (0, 313, 213, 167))
+        else:
+            pygame.draw.rect(self.screen, (255, 0, 0), (0, 313, 213, 167))
         if self.manual_mode:
-            pygame.draw.rect(self.screen, (0, 255, 0), (214, 313, 212, 167))
-        else:
             pygame.draw.rect(self.screen, (255, 0, 0), (214, 313, 212, 167))
-        if self.led_mood:
-            pygame.draw.rect(self.screen, (255, 0, 0), (427, 313, 213, 167))
         else:
+            pygame.draw.rect(self.screen, (0, 255, 0), (214, 313, 212, 167))
+        if self.led_mood:
             pygame.draw.rect(self.screen, (0, 255, 0), (427, 313, 213, 167))
+        else:
+            pygame.draw.rect(self.screen, (255, 0, 0), (427, 313, 213, 167))
         pygame.display.flip()
 
     def start_image_watcher(self):
