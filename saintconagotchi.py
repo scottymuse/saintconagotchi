@@ -98,9 +98,9 @@ class saintconagotchi:
         else:
             pygame.draw.rect(self.screen, (0, 255, 0), (0, 313, 213, 167))
         if self.manual_mode:
-            pygame.draw.rect(self.screen, (255, 0, 0), (213, 313, 214, 167))
+            pygame.draw.rect(self.screen, (0, 255, 0), (214, 313, 212, 167))
         else:
-            pygame.draw.rect(self.screen, (0, 255, 0), (213, 313, 214, 167))
+            pygame.draw.rect(self.screen, (255, 0, 0), (214, 313, 212, 167))
         if self.led_mood:
             pygame.draw.rect(self.screen, (255, 0, 0), (427, 313, 213, 167))
         else:
@@ -142,9 +142,11 @@ class saintconagotchi:
             if event.key == K_ESCAPE: # To auto mode
                 open('/root/.pwnagotchi-auto', 'x')
                 psutil.Popen(["/bin/systemctl", "restart", "pwnagotchi"])
+                self.manual_mode = False
 
             elif event.key == K_RETURN: # To manual mode
                 psutil.Popen(["/bin/systemctl", "restart", "pwnagotchi"])
+                self.manual_mode = True
 
             elif event.key == K_r:
                 # Toggle LED activity notifications
@@ -153,7 +155,6 @@ class saintconagotchi:
                 else:
                     self.led_activity = True
                 self.log_queue.put({"type": "led_toggle", "led": "activity", "value": self.led_activity})
-                self.draw_status_squares()
 
             elif event.key == K_l:
                 # Toggle mood LED
@@ -162,7 +163,8 @@ class saintconagotchi:
                 else:
                     self.led_mood = True
                 self.log_queue.put({"type": "led_toggle", "led": "mood", "value": self.led_mood})
-                self.draw_status_squares()
+
+            self.draw_status_squares()
 
     #Loop to check for button presses
     def start_pygame_event_reader(self):
