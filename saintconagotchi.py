@@ -59,15 +59,16 @@ class process_log_queue(threading.Thread):
         while(True):
             item = self.q_obj.get()
             if item["type"] == "activity":
-                if self.led_activity:
+                if self.led_activity == 1: # Flash light for assoc and deauth
                     if item["act_type"] == "association" and time() - item["time"] < .2:
                         self.leds.setColor(0, 255, 0, 0)
                     elif item["act_type"] == "deauth" and time() - item["time"] < .2:
                         self.leds.setColor(0, 0, 255, 0)
-                    elif item["act_type"] == "handshake" and time() - item["time"] < .2:
+                if self.led_activity > 0: # Always flash for handshakes if the LED is on
+                    if item["act_type"] == "handshake" and time() - item["time"] < .2:
                         self.leds.setColor(0, 0, 255, 255)
-                    sleep(.3)
-                    self.leds.off(0)
+                sleep(.4)
+                self.leds.off(0)
             elif item["type"] == "mood":
                 if item["mood_type"] == "excited":
                     self.current_mood = "excited"
@@ -110,7 +111,7 @@ class saintconagotchi:
     def __init__(self):
         self.screen = pygame.display.set_mode((640,480))
         self.led_mood = True
-        self.led_activity = True
+        self.led_activity = 1 # 0 == off, 1 == all activity, 2 == handshakes only
         self.manual_mode = False
         for proc in psutil.process_iter():
             if proc.name() == "pwnagotchi":
@@ -135,8 +136,10 @@ class saintconagotchi:
         pygame.quit()
 
     def draw_status_squares(self):
-        if self.led_activity:
+        if self.led_activity == 1:
             pygame.draw.rect(self.screen, (0, 255, 0), (0, 313, 213, 167))
+        elif self.led_activity == 2:
+            pygame.draw.rect(self.screen, (0, 255, 255), (0, 313, 213, 167))
         else:
             pygame.draw.rect(self.screen, (255, 0, 0), (0, 313, 213, 167))
         if self.manual_mode:
@@ -192,10 +195,7 @@ class saintconagotchi:
 
             elif event.key == K_r:
                 # Toggle LED activity notifications
-                if self.led_activity:
-                    self.led_activity = False
-                else:
-                    self.led_activity = True
+                self.led_activity = (self.led_activity + 1) % 3
                 self.log_queue.put({"type": "led_toggle", "led": "activity", "value": self.led_activity})
 
             elif event.key == K_l:
