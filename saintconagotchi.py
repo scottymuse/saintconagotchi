@@ -52,6 +52,7 @@ class process_log_queue(threading.Thread):
         self.led_activity = led_activity
         self.led_mood = led_mood
         self.q_obj = q_obj
+        self.current_mood = "unset"
         self.leds = LEDS()
 
     def run(self):
@@ -65,29 +66,45 @@ class process_log_queue(threading.Thread):
                         self.leds.setColor(0, 0, 255, 0)
                     elif item["act_type"] == "handshake" and time() - item["time"] < .2:
                         self.leds.setColor(0, 0, 255, 255)
-                    sleep(.2)
-                    self.leds.off(0)
-                else:
+                    sleep(.3)
                     self.leds.off(0)
             elif item["type"] == "mood":
-                if self.led.mood:
-                    if item["mood_type"] == "excited":
-                        self.leds.setColor(1, 255, 255, 0) #yellow
-                    elif item["mood_type"] == "bored":
-                        self.leds.setColor(1, 0, 255, 255) #purple
-                    elif item["mood_type"] == "sad":
-                        self.leds.setColor(1, 0, 0, 255) #blue
-                    elif item["mood_type"] == "lonely":
-                        self.leds.setColor(1, 255, 0, 255) #green
-                    elif item["mood_type"] == "grateful":
-                        self.leds.setColor(1, 192, 255, 203) #pink
-                    elif item["mood_type"] == "unset":
-                        self.leds.setColor(1, 128, 128, 128) #gray
+                if item["mood_type"] == "excited":
+                    self.current_mood = "excited"
+                elif item["mood_type"] == "bored":
+                    self.current_mood = "bored"
+                elif item["mood_type"] == "sad":
+                    self.current_mood = "sad"
+                elif item["mood_type"] == "lonely":
+                    self.current_mood = "lonely"
+                elif item["mood_type"] == "grateful":
+                    self.current_mood = "grateful"
+                elif item["mood_type"] == "unset":
+                    self.current_mood = "unset"
+                self.set_mood_led()
             elif item["type"] == "led_toggle":
                 if item["led"] == "activity":
                     self.led_activity = item["value"]
                 else:
                     self.led_mood = item["value"]
+                    self.set_mood_led()
+
+    def set_mood_led(self):
+        if self.led_mood:
+            if self.current_mood == "excited":
+                self.leds.setColor(1, 255, 255, 0) #yellow
+            elif self.current_mood == "bored":
+                self.leds.setColor(1, 0, 255, 255) #purple
+            elif self.current_mood == "sad":
+                self.leds.setColor(1, 0, 0, 255) #blue
+            elif self.current_mood == "lonely":
+                self.leds.setColor(1, 255, 0, 255) #green
+            elif self.current_mood == "grateful":
+                self.leds.setColor(1, 192, 255, 203) #pink
+            elif self.current_mood == "unset":
+                self.leds.setColor(1, 128, 128, 128) #gray
+        else:
+            self.leds_off(1)
 
 class saintconagotchi:
     def __init__(self):
@@ -113,7 +130,6 @@ class saintconagotchi:
         pygame.mouse.set_visible(False)
 
         self.update_image() # Load the first image
-        self.log_queue.put({"type":"mood", "time":time(), "mood_type":"unset"}) # Make the mood 'unset'
 
     def __del__(self):
         pygame.quit()
