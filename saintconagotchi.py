@@ -104,7 +104,7 @@ class process_log_queue(threading.Thread):
             elif self.current_mood == "unset":
                 self.leds.setColor(1, 128, 128, 128) #gray
         else:
-            self.leds_off(1)
+            self.leds.off(1)
 
 class saintconagotchi:
     def __init__(self):
