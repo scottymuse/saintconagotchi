@@ -52,8 +52,9 @@ class process_log_queue(threading.Thread):
         self.led_activity = led_activity
         self.led_mood = led_mood
         self.q_obj = q_obj
-        self.current_mood = "unset"
         self.leds = LEDS()
+        self.current_mood = "unset"
+        self.set_mood_led()
 
     def run(self):
         while(True):
@@ -66,7 +67,7 @@ class process_log_queue(threading.Thread):
                         self.leds.setColor(0, 0, 255, 0)
                 if self.led_activity > 0: # Always flash for handshakes if the LED is on
                     if item["act_type"] == "handshake" and time() - item["time"] < .2:
-                        self.leds.setColor(0, 0, 255, 255)
+                        self.leds.setColor(0, 255, 255, 0)
                 sleep(.4)
                 self.leds.off(0)
             elif item["type"] == "mood":
@@ -139,7 +140,7 @@ class saintconagotchi:
         if self.led_activity == 1:
             pygame.draw.rect(self.screen, (0, 255, 0), (0, 313, 213, 167))
         elif self.led_activity == 2:
-            pygame.draw.rect(self.screen, (0, 255, 255), (0, 313, 213, 167))
+            pygame.draw.rect(self.screen, (255, 255, 0), (0, 313, 213, 167))
         else:
             pygame.draw.rect(self.screen, (255, 0, 0), (0, 313, 213, 167))
         if self.manual_mode:
