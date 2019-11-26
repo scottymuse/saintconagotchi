@@ -4,6 +4,7 @@ import pygame
 from pygame.locals import *
 import pyinotify
 import psutil
+from os import remove
 from subprocess import PIPE
 from time import time,sleep
 from re import search
@@ -61,7 +62,7 @@ class process_log_queue(threading.Thread):
             item = self.q_obj.get()
             if item["type"] == "activity":
                 if self.led_activity == 1: # Flash light for assoc and deauth
-                    if item["act_type"] == "association" and time() - item["time"] < .2:
+                    if item["act_type"] == "association" and time() - item["time"] < .2: # If event is too old, don't bother
                         self.leds.setColor(0, 255, 0, 0)
                     elif item["act_type"] == "deauth" and time() - item["time"] < .2:
                         self.leds.setColor(0, 0, 255, 0)
@@ -114,6 +115,7 @@ class saintconagotchi:
         self.led_mood = True
         self.led_activity = 1 # 0 == off, 1 == all activity, 2 == handshakes only
         self.manual_mode = False
+        self.last_restart_time = time()
         for proc in psutil.process_iter():
             if proc.name() == "pwnagotchi":
                 if "--manual" in proc.cmdline():
@@ -185,14 +187,20 @@ class saintconagotchi:
 
     def events(self, event):
         if event.type == pygame.KEYDOWN:
-            if event.key == K_ESCAPE: # To auto mode
+            if event.key == K_ESCAPE and time() - self.last_restart_time > 30: # To auto mode
                 open('/root/.pwnagotchi-auto', 'x')
                 psutil.Popen(["/bin/systemctl", "restart", "pwnagotchi"])
                 self.manual_mode = False
+                self.last_restart_time = time()
 
-            elif event.key == K_RETURN: # To manual mode
+            elif event.key == K_RETURN and time() - self.last_restart_time > 30: # To manual mode
+                try:
+                    remove("/root/.pwnagotchi-auto")
+                except FileNotFoundError:
+                    continue
                 psutil.Popen(["/bin/systemctl", "restart", "pwnagotchi"])
                 self.manual_mode = True
+                self.last_restart_time = time()
 
             elif event.key == K_r:
                 # Toggle LED activity notifications
