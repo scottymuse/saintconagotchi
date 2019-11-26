@@ -197,7 +197,7 @@ class saintconagotchi:
                 try:
                     remove("/root/.pwnagotchi-auto")
                 except FileNotFoundError:
-                    continue
+                    pass
                 psutil.Popen(["/bin/systemctl", "restart", "pwnagotchi"])
                 self.manual_mode = True
                 self.last_restart_time = time()
